@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  flask:
+    build: .
+    container_name: flask
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/usr/src/app
+    command: >
+      sh -c "service cron start && python /usr/src/app/get_kline_data.py && python /usr/src/app/app.py"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15.2-alpine
+    container_name: postgres_db
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer:4.8.1-standalone
+    container_name: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

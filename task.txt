@@ -1,0 +1,11 @@
+Task 1:
+Write a script to collect data from Binance API for provided interval (can be 1d, 4h, 1h`) and for provided symbol (`BTCUSDT, ETHUSDT, etc.).
+Suggest a method of deploying such a script to collect relevant data in the interval of your choice (every 1D, 4H, 1H).
+Save data in csv format.
+Suggest format of saving data in a relational database.
+
+Task 2:
+Write a simple Flask UI, which will display a page with candlestick data from task 1, using plotly as a module for output (since it works dynamically using js), and a piechart of market caps for 10 symbols of your choice.
+
+Task 3:
+Provide a README.md with instructions on how to run both scripts.

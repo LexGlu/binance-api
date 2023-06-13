@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Plotly Example</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id="list-of-candlestick-charts">
+        <h2>List of Candlestick Charts</h2>
+        <ul>
+            {% for kline in klines %}
+                <li><a href="/charts?kline={{ kline.arg }}">{{ kline.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="candlestick-chart"></div>
+    <div id="pie-chart"></div>
+
+    <script>
+        // Parse the JSON strings for candlestick and pie chart
+        var candlestickData = JSON.parse('{{ kline_fig | safe }}');
+        var pieData = JSON.parse('{{ pie_fig | safe }}');
+
+        // Create the candlestick chart using the parsed data
+        Plotly.newPlot('candlestick-chart', candlestickData.data, candlestickData.layout);
+
+        // Create the pie chart using the parsed data
+        Plotly.newPlot('pie-chart', pieData.data, pieData.layout);
+    </script>
+</body>
+</html>
