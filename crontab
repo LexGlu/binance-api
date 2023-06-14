@@ -1,1 +1,1 @@
-0 * * * * /bin/bash /usr/src/app/wrapper.sh >> /usr/src/app/cron.log 2>&1
+0 * * * * /bin/bash /usr/src/app/wrapper.sh >> /usr/src/app/app/logs/cron.log 2>&1

@@ -1,8 +1,12 @@
 import psycopg2
 import pandas as pd
 import os
-import json
-from utils import log_message
+
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import scripts.utils as utils
+
 
 def create_connection():
     connection = psycopg2.connect(
@@ -35,7 +39,7 @@ def create_table(table_name):
     cursor.execute(query)
     connection.commit()
     connection.close()
-    log_message(f'Created {table_name} table')
+    utils.log_message(f'Created {table_name} table')
     
 
 def table_exists(table_name):
@@ -79,7 +83,7 @@ def insert_data(df, table_name):
     connection.commit()
     cursor.close()
     connection.close()
-    log_message(f'Inserted {len(df)} rows into {table_name} table')
+    utils.log_message(f'Inserted {len(df)} rows into {table_name} table')
     
     
 def get_table_names():

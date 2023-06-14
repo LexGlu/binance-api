@@ -1,32 +1,24 @@
-import datetime
-import time
 import json
 import aiohttp
 import asyncio
 import pandas as pd
 import os
-from utils import log_message
-from database import table_exists, create_table, insert_data
+import database as db
+
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import scripts.utils as utils
 
 workdir = os.path.dirname(__file__)
 
 def save_to_db(df, table_name):
     # create table if it doesn't exist
-    if not table_exists(table_name):
-        create_table(table_name)
+    if not db.table_exists(table_name):
+        db.create_table(table_name)
     
     # insert data into database
-    insert_data(df, table_name)
-
-def save_to_csv(df, file_name):
-    # append data to csv file if it exists (header=False to not write header again)
-    if os.path.exists(f'{workdir}/data/{file_name}.csv'):
-        df.to_csv(f'{workdir}/data/{file_name}.csv', mode='a', header=False, index=False)
-        log_message(f'Appended {len(df)} rows to {file_name}.csv')
-    else:
-        df.to_csv(f'{workdir}/data/{file_name}.csv', index=False)
-        log_message(f'Created {file_name}.csv with {len(df)} rows')
-
+    db.insert_data(df, table_name)
 
 async def get_data(base_url, symbol, interval, limit, start_time=None):
     # get data from binance api
@@ -43,7 +35,7 @@ async def get_data(base_url, symbol, interval, limit, start_time=None):
             
             # check if data is empty and return if it is
             if not data:
-                log_message(f'No data returned for {symbol} {interval} and start_time {start_time}. Check if new data is available since last run. Skipping...')
+                utils.log_message(f'No data returned for {symbol} {interval} and start_time {start_time}. Check if new data is available since last run. Skipping...')
                 return
             
             # remove last column (unused field from api call, says to ignore it)
@@ -61,7 +53,7 @@ async def get_data(base_url, symbol, interval, limit, start_time=None):
             save_to_db(df, data_name)
             
             # save data to csv file
-            save_to_csv(df, data_name)
+            utils.save_to_csv(df, data_name)
 
 
 if __name__ == '__main__':
@@ -73,13 +65,7 @@ if __name__ == '__main__':
     symbols = ('BTCUSDT', 'ETHUSDT', 'BNBUSDT', )
     
     # read start time from file or set to None if file is empty (first run)
-    with open(f'{workdir}/data/start_time.txt', 'r') as f:
-        # read start_time from file
-        start_time = f.read()
-        
-        # if file is empty, set start_time to None
-        if not start_time:
-            start_time = None
+    start_time = utils.get_start_time()
     
     for symbol in symbols:
         for interval in intervals:
@@ -87,9 +73,7 @@ if __name__ == '__main__':
             asyncio.run(get_data(base_url, symbol, interval, limit, start_time))
             
     # write current time as timestamp in milliseconds to file for next run to use as start_time (in order to get only new data)
-    with open(f'{workdir}/data/start_time.txt', 'w') as f:
-        timestamp = int(time.time() * 1000)
-        f.write(str(timestamp))
+    utils.set_start_time()
     
     print('Finished collecting data. Check logs.txt for details.')
     

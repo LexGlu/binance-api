@@ -32,7 +32,7 @@ cd binance-api
 ```bash
 docker-compose up -d
 ```
-4. Wait for the containers to be built and started. Please not that Python script [get_kline_data.py](./get_kline_data.py) will run on startup (to collect sample data from Binance API). You can check the status of the containers with the following command:
+4. Wait for the containers to be built and started. Please note that Python script [get_kline_data.py](./get_kline_data.py) will run on startup (to collect sample data from Binance API). You can check the status of the containers with the following command:
 ```bash
 docker-compose ps
 ```

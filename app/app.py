@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 import plotly.graph_objects as go
-from database import get_table_names, get_data
+import scripts.database as db
 
 app = Flask(__name__, template_folder='templates')
 
@@ -18,7 +18,7 @@ def charts():
         return f'{kline.split("_")[0].upper()} {kline.split("_")[1]}'
     
     # get list if available candlestick charts
-    klines = get_table_names()
+    klines = db.get_table_names()
     
     # get candlestick name parameter from url
     kline = request.args.get('kline')
@@ -27,7 +27,7 @@ def charts():
         kline = klines[0]
         
     # get candlestick data from database
-    df = get_data(kline)
+    df = db.get_data(kline)
     kline_fig = go.Figure(data=[go.Candlestick(x=df.index, open=df['open'], high=df['high'], low=df['low'], close=df['close'])])
     kline_fig.update_layout(title=f'{kline_repr(kline)} Candlestick Chart')
     
