@@ -8,11 +8,11 @@ services:
     env_file:
       - .env
     ports:
-      - "5555:5555"
+      - "8000:8000"
     volumes:
       - .:/usr/src/app
     command: >
-      sh -c "service cron start && python /usr/src/app/app/scripts/get_kline_data.py && python /usr/src/app/app/app.py"
+      sh -c "service cron start && python /usr/src/app/app/scripts/get_kline_data.py && cd app && gunicorn --bind 0.0.0.0:8000 app:app"
     depends_on:
       - db
 

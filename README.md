@@ -32,11 +32,11 @@ cd binance-api
 ```bash
 docker-compose up -d
 ```
-4. Wait for the containers to be built and started. Please note that Python script [get_kline_data.py](./get_kline_data.py) will run on startup (to collect sample data from Binance API). You can check the status of the containers with the following command:
+4. Wait for the containers to be built and started. Please note that Python script [get_kline_data.py](./app/scripts/get_kline_data.py) will run on startup (to collect sample data from Binance API). You can check the status of the containers with the following command:
 ```bash
 docker-compose ps
 ```
-5. When the containers are up and running, you can check Flask UI, which will display a page with candlesticks data and a piechart of market caps for 10 tokens. It is available at http://localhost:5555.
+5. When the containers are up and running, you can check Flask UI, which will display a page with candlesticks data and a piechart of market caps for 10 tokens. It is available at http://localhost:8000.
 
 6. You can check the data in the database using GUI for the database. It is available at http://localhost:8080. You can use credentials from the file [.env](./.env) to login to the database and check the data.
 
@@ -47,11 +47,11 @@ docker-compose down -v # -v flag is used to remove volumes as well (database dat
 
 ## Solution description
 ### Task 1
-The script [get_kline_data.py](./get_kline_data.py) uses Binance API endpoint (https://api.binance.com/api/v3/klines) to collect data for provided interval and symbol. It saves the data in csv format and also saves it in the database (PostgreSQL). The database credentials are stored in the [.env](./.env) file and it runs in a separate container (see [docker-compose.yml](./docker-compose.yml)).
+The script [get_kline_data.py](./app/scripts/get_kline_data.py) uses Binance API endpoint (https://api.binance.com/api/v3/klines) to collect data for provided interval and symbol. It saves the data in csv format and also saves it in the database (PostgreSQL). The database credentials are stored in the [.env](./.env) file and it runs in a separate container (see [docker-compose.yml](./docker-compose.yml)).
 
 The script will run every hour using cron job. The cron job is defined in the [crontab](./crontab) file.
 
-Detailed logs are stored in the [logs.txt](./logs.txt) file. Also logs of cron jobs are stored in the [cron.log](./cron.log) file.
+Detailed logs are stored in the [logs.txt](./app/logs/logs.txt) file. Also logs of cron jobs are stored in the [cron.log](./app/logs/cron.log) file.
 
 The database schema is as follows:
 - 'open_time' - timestamp of the start of the candlestick (timestamp)
@@ -67,6 +67,6 @@ The database schema is as follows:
 - 'taker_buy_quote_asset_volume' - volume of the quote asset bought by taker during the candlestick (float)
 
 ### Task 2
-The Flask UI is implemented in [app.py](./app.py). It uses the data from the database to display candlesticks and piechart. The candlesticks and piechart are implemented using plotly library. The UI is available at http://localhost:5555 (several charts are available, you can switch between them using the list in the top left corner).
+The Flask UI is implemented in [app.py](./app/app.py). It uses the data from the database to display candlesticks and piechart. The candlesticks and piechart are implemented using plotly library. The UI is available at http://localhost:8000 (several charts are available, you can switch between them using the list in the top left corner). Gunicorn is used as a WSGI HTTP Server.
 
 ![image1](./images/image1.png)
