@@ -3,6 +3,7 @@
 <head>
     <title>Flask Plotly Example</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.js"></script>
 </head>
 <body>
     <div id="list-of-candlestick-charts">
@@ -17,15 +18,23 @@
     <div id="pie-chart"></div>
 
     <script>
-        // Parse the JSON strings for candlestick and pie chart
-        var candlestickData = JSON.parse('{{ kline_fig | safe }}');
-        var pieData = JSON.parse('{{ pie_fig | safe }}');
-
-        // Create the candlestick chart using the parsed data
+        let candlestickData = JSON.parse('{{ kline_fig | safe }}');
         Plotly.newPlot('candlestick-chart', candlestickData.data, candlestickData.layout);
-
-        // Create the pie chart using the parsed data
-        Plotly.newPlot('pie-chart', pieData.data, pieData.layout);
+    
+        let pieData = JSON.parse('{{ pie_chart_fig | safe }}');
+        let pieChart = Plotly.newPlot('pie-chart', pieData.data, pieData.layout);
+    
+        // update pie chart when new data is received via websocket connection
+        const socket = io.connect('http://localhost:8000/chart'); // connect to the '/chart' namespace
+        socket.on('connect', function() {
+            console.log('Connected to websocket');
+        });
+    
+        socket.on('update_chart', function(data) {
+            let newPieData = JSON.parse(data.chart_data);
+            Plotly.react('pie-chart', newPieData.data, newPieData.layout);
+        });
     </script>
+    
 </body>
 </html>

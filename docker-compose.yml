@@ -12,7 +12,7 @@ services:
     volumes:
       - .:/usr/src/app
     command: >
-      sh -c "service cron start && python /usr/src/app/app/scripts/get_kline_data.py && cd app && gunicorn --bind 0.0.0.0:8000 app:app"
+      sh -c "service cron start && python /usr/src/app/app/scripts/get_kline_data.py && cd app && gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --bind 0.0.0.0:8000 app:app"
     depends_on:
       - db
 

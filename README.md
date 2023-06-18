@@ -28,19 +28,24 @@ git clone https://github.com/LexGlu/binance-api.git
 ```bash
 cd binance-api
 ```
-3. Run the following command:
+3. Create a config.py file in the [app](./app) directory and add the API key from CoinMarketCap to it. You can get the API key from the official CoinMarketCap website: https://coinmarketcap.com/api/ (free plan is enough for this task). The file should look like this:
+```python
+api_key='your_API_key'
+```
+
+4. Run the following command:
 ```bash
 docker-compose up -d
 ```
-4. Wait for the containers to be built and started. Please note that Python script [get_kline_data.py](./app/scripts/get_kline_data.py) will run on startup (to collect sample data from Binance API). You can check the status of the containers with the following command:
+5. Wait for the containers to be built and started. Please note that Python script [get_kline_data.py](./app/scripts/get_kline_data.py) will run on startup (to collect sample data from Binance API). You can check the status of the containers with the following command:
 ```bash
 docker-compose ps
 ```
-5. When the containers are up and running, you can check Flask UI, which will display a page with candlesticks data and a piechart of market caps for 10 tokens. It is available at http://localhost:8000.
+6. When the containers are up and running, you can check Flask UI, which will display a page with candlesticks data and a piechart of market caps for top 10 tokens. It is available at http://localhost:8000. Pie chart is updated in a mock real-time mode (every 30 seconds for demonstration purposes). It is implemented using websockets (Flask-SocketIO library).
 
-6. You can check the data in the database using GUI for the database. It is available at http://localhost:8080. You can use credentials from the file [.env](./.env) to login to the database and check the data.
+7. You can check the data in the database using GUI for the database. It is available at http://localhost:8080. You can use credentials from the file [.env](./.env) to login to the database and check the data.
 
-7. To stop the containers, run the following command:
+8. To stop the containers, run the following command:
 ```bash
 docker-compose down -v # -v flag is used to remove volumes as well (database data)
 ```
@@ -67,6 +72,6 @@ The database schema is as follows:
 - 'taker_buy_quote_asset_volume' - volume of the quote asset bought by taker during the candlestick (float)
 
 ### Task 2
-The Flask UI is implemented in [app.py](./app/app.py). It uses the data from the database to display candlesticks and piechart. The candlesticks and piechart are implemented using plotly library. The UI is available at http://localhost:8000 (several charts are available, you can switch between them using the list in the top left corner). Gunicorn is used as a WSGI HTTP Server.
+The Flask UI is implemented in [app.py](./app/app.py). It uses the data from the database to display candlesticks. The candlesticks and piechart are implemented using plotly library. The UI is available at http://localhost:8000 (several charts are available, you can switch between them using the list in the top left corner). Gunicorn is used as a WSGI HTTP Server.
 
 ![image1](./images/image1.png)

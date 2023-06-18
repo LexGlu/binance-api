@@ -1,8 +1,17 @@
-from flask import Flask, render_template, request, redirect
 import plotly.graph_objects as go
+import requests
 import scripts.database as db
+import config
+
+from flask import Flask, render_template, request, redirect
+from flask_socketio import SocketIO, emit
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
+
 
 app = Flask(__name__, template_folder='templates')
+socketio = SocketIO(app)
+
 
 # root page which redirects to charts page
 @app.route('/', methods=['GET'])
@@ -34,23 +43,49 @@ def charts():
     # convert candlestick chart to JSON to pass to template
     kline_fig_JSON = kline_fig.to_json()
     
-    # Create pie chart data for market caps using graph objects from plotly
-    symbols = ['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'DOGE', 'TRX', 'MATIC', 'SOL', 'DOT']
-    market_caps = [502.35, 209.33, 37.17, 26.83, 9.56, 8.57, 6.47, 5.99, 5.96, 5.49]
-
-    pie_fig = go.Figure(data=[go.Pie(labels=symbols, values=market_caps)])
-    pie_fig.update_layout(title='Market Caps of 10 Cryptocurrencies (in billions of USD)')
-    pie_fig_JSON = pie_fig.to_json()
-    
     def kline_repr(kline):
         return f'{kline.split("_")[0].upper()} {kline.split("_")[1]}'
     
     klines = [{'name': kline_repr(kline), 'arg': kline} for kline in klines]
     klines.sort(key=lambda x: x['name']) # sort by name
     
-    return render_template('index.html', kline_fig=kline_fig_JSON, pie_fig=pie_fig_JSON, klines=klines)
+    pie_chart_fig_JSON = get_market_cap_data()
+    
+    return render_template('index.html', kline_fig=kline_fig_JSON, klines=klines, pie_chart_fig=pie_chart_fig_JSON)
 
 
-# this is development server, gunicorn is used within docker container
+def get_market_cap_data():
+        url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=10&convert=USD' # API endpoint to retrieve top 10 cryptocurrencies (sorted by market cap desc)
+        api_key = config.api_key # API key from CoinMarketCap
+    
+        headers = {
+        'Accepts': 'application/json',
+        'X-CMC_PRO_API_KEY': api_key,
+        }
+        
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            market_cap_data = {d['symbol']: round(d['circulating_supply'] * d['quote']['USD']['price'] / 1000000000, 2) for d in data['data']} # convert market cap to billions
+            print(market_cap_data)
+            
+            pie_chart_fig = go.Figure(data=[go.Pie(labels=list(market_cap_data.keys()), values=list(market_cap_data.values()))])
+            pie_chart_fig.update_layout(title='Market Cap of Top 10 Cryptocurrencies (Billion USD)')
+            pie_chart_fig_JSON = pie_chart_fig.to_json()
+            
+            return pie_chart_fig_JSON
+        
+
+@socketio.on('connect', namespace='/chart') 
+def connect():
+    while True:
+        time_to_sleep = 30 # update chart every 30 seconds (for demo purposes)
+        pie_chart_fig_JSON = get_market_cap_data()
+        socketio.emit('update_chart', {'chart_data': pie_chart_fig_JSON}, namespace='/chart')
+        socketio.sleep(time_to_sleep)
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5555, debug=True)
+    http_server = pywsgi.WSGIServer(('0.0.0.0', 5555), app, handler_class=WebSocketHandler)
+    http_server.serve_forever()
