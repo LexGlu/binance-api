@@ -1,6 +1,8 @@
 import datetime
+import json
 import os
 import time
+
 from pathlib import Path
 
 
@@ -24,23 +26,42 @@ def save_to_csv(df, file_name):
     else:
         df.to_csv(f'{parent_dir}/data/{file_name}.csv', index=False)
         log_message(f'Created {file_name}.csv with {len(df)} rows')
-    
 
-def get_start_time():
-    with open(f'{parent_dir}/data/start_time.txt', 'r') as f:
-        # read start_time from file
-        start_time = f.read()
+
+def get_start_time_from_json(interval, symbol):
+    with open(f'{parent_dir}/data/start_time.json', 'r') as file:
+
+        # try to read data from file (if it exists) else create empty dictionary
+        try:
+            data = json.load(file)
+        except json.decoder.JSONDecodeError:
+            data = {}
         
-        # if file is empty, set start_time to None
-        if not start_time:
-            start_time = None
-            
-    return start_time
-
-
-def set_start_time():
+        # check if there is data in the file
+        if not data:
+            return None
+        
+        start_time = data.get(symbol, {}).get(interval) # will return None if symbol or interval doesn't exist in data
+        
+        return start_time
+        
+        
+def set_start_time_to_json(interval, symbol):
     # write current time as timestamp in milliseconds to file for next run to use as start_time (in order to get only new data)
-    with open(f'{parent_dir}/data/start_time.txt', 'w') as f:
+    with open(f'{parent_dir}/data/start_time.json', 'r+') as file:
+        
+        # try to read data from file (if it exists) else create empty dictionary
+        try:
+            data = json.load(file)
+        except json.decoder.JSONDecodeError:
+            data = {}
+    
         timestamp = int(time.time() * 1000)
-        f.write(str(timestamp))
+
+        symbol_data = data.get(symbol, {})
+        symbol_data[interval] = timestamp
+        data[symbol] = symbol_data
+        
+        file.seek(0) # move cursor to beginning of file
+        json.dump(data, file) # write data to file (overwrites existing data)
         

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import plotly.graph_objects as go
 import scripts.database as db
 
@@ -7,7 +7,7 @@ app = Flask(__name__, template_folder='templates')
 # root page which redirects to charts page
 @app.route('/', methods=['GET'])
 def index():
-    return charts()
+    return redirect('/charts')
 
 
 @app.route('/charts', methods=['GET'])
@@ -51,5 +51,6 @@ def charts():
     return render_template('index.html', kline_fig=kline_fig_JSON, pie_fig=pie_fig_JSON, klines=klines)
 
 
+# this is development server, gunicorn is used within docker container
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5555, debug=True)

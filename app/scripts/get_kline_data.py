@@ -1,13 +1,14 @@
-import json
 import aiohttp
 import asyncio
-import pandas as pd
+import json
 import os
-import database as db
+import pandas as pd
+import time
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import database as db
 import scripts.utils as utils
 
 workdir = os.path.dirname(__file__)
@@ -54,6 +55,9 @@ async def get_data(base_url, symbol, interval, limit, start_time=None):
             
             # save data to csv file
             utils.save_to_csv(df, data_name)
+            
+            # set start_time to current time
+            utils.set_start_time_to_json(interval, symbol)
 
 
 if __name__ == '__main__':
@@ -61,19 +65,27 @@ if __name__ == '__main__':
     # set up variables for data collection 
     base_url = 'https://api.binance.com/api/v3/klines?'
     limit = '1000' # max limit for api call is 1000
-    intervals = ('1d', '4h', '1h', )
+    intervals = {'1d': 86400000, '4h': 14400000, '1h': 3600000}
     symbols = ('BTCUSDT', 'ETHUSDT', 'BNBUSDT', )
     
     # read start time from file or set to None if file is empty (first run)
-    start_time = utils.get_start_time()
+    current_time = int(time.time() * 1000)
     
     for symbol in symbols:
-        for interval in intervals:
-            print(f'Collecting {symbol} {interval} data...')
-            asyncio.run(get_data(base_url, symbol, interval, limit, start_time))
+        for interval_str, interval_ms in intervals.items():
+            start_time = utils.get_start_time_from_json(interval_str, symbol)
             
-    # write current time as timestamp in milliseconds to file for next run to use as start_time (in order to get only new data)
-    utils.set_start_time()
-    
+            # calculate time difference between current time and start time (try/except in case start_time is None)
+            try:
+                time_diff = current_time - int(start_time)
+            except TypeError:
+                time_diff = None
+            
+            if start_time and time_diff <= interval_ms:
+                utils.log_message(f'Last data collected for {symbol} {interval_str} - {(time_diff / 60000):.2f} seconds ago. Skipping...')
+                continue
+            
+            print(f'Collecting {symbol} {interval_str} data...')
+            asyncio.run(get_data(base_url, symbol, interval_str, limit, start_time))
+                
     print('Finished collecting data. Check logs.txt for details.')
-    
